@@ -1,0 +1,137 @@
+﻿<script type="text/template" id="categoryList">
+    <div>
+        <div style="text-align: right">
+            <el-button type="success" @@click="addCategory()">添加类别</el-button>
+        </div>
+        <el-table :data="tableData"
+                  style="width: 100%">
+            <el-table-column prop="id"
+                             label="ID">
+            </el-table-column>
+            <el-table-column prop="name"
+                             label="名称">
+            </el-table-column>
+
+            <el-table-column fixed="right"
+                             label="操作"
+                             width="180">
+                <template slot-scope="scope">
+                    <el-button @@click="editCategory(scope.row)" type="success" size="small">
+                        编辑
+                    </el-button>
+                    <el-button @@click="deleteCategory(scope.row.id)" type="danger" size="small">
+                        删除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <el-dialog :title="editType" :visible.sync="addFoodVisible">
+            <el-form :model="form">
+                <el-form-item label="名称" :label-width="formLabelWidth">
+                    <el-input v-model="form.Name" autocomplete="off"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @@click="closeDialog()">取 消</el-button>
+                <el-button type="success" @@click="submitCategory()">确 定</el-button>
+            </div>
+        </el-dialog>
+    </div>
+</script>
+
+<script type="text/javascript">
+    var category = {
+        template: '#categoryList',
+        data() {
+            return {
+                tableData: [],
+
+                form: {
+                    Id: 0,
+                    Name: "",
+                },
+
+                editType: "添加",
+                backup: {},
+                addFoodVisible: false,
+                formLabelWidth: '80px'
+            }
+        },
+        mounted() {
+            this.getData();
+        },
+        methods: {
+            getData() {
+                _fetch("/Category/GetCategorys", "GET").then(res => {
+                    if (res.status = "Success") {
+                        this.tableData = res.data;
+                    }
+                    else {
+                        alert("系统出错了！");
+                    }
+                });
+            },
+
+            addCategory() {
+                this.editType = "添加类型";
+                this.addFoodVisible = true;
+            },
+
+            editCategory(row) {
+                this.editType = "编辑类型";
+                this.form = {
+                    Id: row.id,
+                    Name: row.name
+                };
+                this.addFoodVisible = true;
+            },
+
+            closeDialog() {
+                this.form = {
+                    Id: 0,
+                    Name: "",
+                };
+
+               this.addFoodVisible = false;
+            },
+
+            submitCategory() {
+                if (!this.form.Name) {
+                    alert("请完成下面所有信息！")
+                    return;
+                }
+
+                var model = $.extend(true, {}, this.form);
+                var data = {
+                    Id: model.Id,
+                    Name: model.Name
+                }
+
+                _fetch("/Category/EditCategory", "POST", data).then(res => {
+                    if (res.status == true) {
+                        alert("操作成功！");
+                        this.getData();
+                        this.addFoodVisible = false;
+                    }
+                    else {
+                        alert("系统出错了！");
+                    }
+                });
+            },
+
+
+            deleteCategory(id) {
+               _fetch("/Category/DeleteCategory?id=" + id, "POST").then(res => {
+                    if (res.status == true) {
+                        alert("操作成功！");
+                        this.getData();
+                    }
+                    else {
+                        alert("系统出错了！");
+                    }
+                });
+            },
+        }
+    };
+</script>

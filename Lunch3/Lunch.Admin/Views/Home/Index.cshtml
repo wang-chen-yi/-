@@ -1,0 +1,193 @@
+﻿@using System.Linq
+@using Lunch.Admin.Models
+@model List<Menu>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index</title>
+
+    <link rel="stylesheet" href="~/css/main.css" />
+    <link rel="stylesheet" href="~/lib/element-ui/theme-chalk/index.css" />
+    <script type="text/javascript" src="~/lib/vue/vue.js"></script>
+    <script type="text/javascript" src="~/lib/element-ui/index.js"></script>
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.js"></script>
+    <script type="text/javascript" src="~/js/site.js"></script>
+    <script type="text/javascript" src="~/js/moment.js"></script>
+</head>
+<body>
+    <div id="app">
+        <template>
+
+            <el-container style="border: 1px solid #eee">
+                <el-aside width="200px" style="background-color: rgb(238, 241, 246)">
+                    <el-menu :default-openeds="['1', '3']" style="height: 100%">
+                        <el-submenu index="1">
+                            <template slot="title">
+                                <i class="el-icon-menu"></i>菜品管理
+                            </template>
+                            <el-menu-item index="1-1" @@click="addTab('菜品列表','/FoodMenu/Index', 'foodMenu')">
+                                菜品列表
+                            </el-menu-item>
+                            <el-menu-item index="1-1" @@click="addTab('菜品分类','/Category/Index', 'category')">
+                                菜品分类
+                            </el-menu-item>
+                        </el-submenu>
+                        <el-submenu index="2">
+                            <template slot="title">
+                                <i class="el-icon-menu"></i>订单管理
+                            </template>
+                            <el-menu-item index="2-1" @@click="addTab('外卖订单','/Order/Index','order')">
+                                外卖订单
+                            </el-menu-item>
+                        </el-submenu>
+                    </el-menu>
+                </el-aside>
+
+                <el-container>
+                    <el-header style="text-align: right; font-size: 13px; color: #fff; line-height: 60px;">
+                        @if (string.IsNullOrEmpty(User.Identity.Name))
+                        {
+                            <a href="/Home/Login" style="color: #fff">登陆</a>
+                        }
+                        else
+                        {
+                            <span class="el-avatar el-avatar--icon el-avatar--circle">
+                                <i class="el-icon-user-solid"></i>
+                            </span>
+                            <span>象嘤嘤</span>
+
+                            <a href="/Home/UpdatePwd" style="color: #fff; margin-left: 10px">修改密码</a>
+                            <a href="/Home/Logout" style="color: #fff; margin-left: 10px">退出</a>
+                        }
+                    </el-header>
+
+                    <el-main v-bind:class="{main_toggle:isCollapse}">
+                        <el-tabs v-model="tabsIndex" type="border-card" closable
+                                 @@tab-remove="removeTab"
+                                 style="min-width:900px;">
+                            <el-tab-pane v-for="(item, index) in tabsData"
+                                         :key="item.name"
+                                         :label="item.title"
+                                         :name="item.name"
+                                         style="height:100%;">
+                                <div :id="'tab_'+item.name"></div>
+                                <component :is="item.content" :ref="item.name"
+                                           :tabIndex="item.name"></component>
+
+                            </el-tab-pane>
+                        </el-tabs>
+                    </el-main>
+                </el-container>
+            </el-container>
+        </template>
+    </div>
+</body>
+</html>
+<script>
+
+    var table_s = {
+
+        template: '<div><div style="font-size: 14px"><b>@User.Identity.Name</b>, 欢迎光临Lunch后台管理系统。<br><br><br>现在是：@DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")</div></div>',
+        data() {
+            return {
+                tableData: [
+                    {
+                        date: '2020-05-02',
+                        name: '100',
+                        address: '￥1500.12元',
+                        rate: '100%'
+                    }, {
+                        date: '2020-05-04',
+                        name: '200',
+                        address: '￥1500.12元',
+                        rate: '100%'
+                    }, {
+                        date: '2020-05-01',
+                        name: '300',
+                        address: '￥1700.11元',
+                        rate: '100%'
+                    }, {
+                        date: '2020-06-03',
+                        name: '400',
+                        address: '￥2500.12元',
+                        rate: '100%'
+                    }
+                ]
+            }
+        }
+    }
+    var app = new Vue({
+        el: "#app",
+        data: {
+            isCollapse:false,
+            username: '@User.Identity.Name',
+            tabsData: [{
+                name: '1',
+                title: '首页',
+                content: table_s
+            }],
+            tabsIndex: "1"
+        },
+        methods: {
+            handleOpen(key, keyPath) {
+                console.log(key, keyPath);
+            },
+            handleClose(key, keyPath) {
+                console.log(key, keyPath);
+            },
+            menuToggle() {
+                if (this.isCollapse) {
+
+                    this.isCollapse = false;
+                } else {
+
+                    this.isCollapse = true;
+                }
+            },
+            addTab(title, path, name) {
+                console.log(title + "," + path + "," + name);
+                let flag = false;
+                let tabs = this.tabsData;
+                var self = this;
+                for (let tab of tabs) {
+                    if (tab.name === name) {
+                        this.tabsIndex = name;
+                        flag = true;
+                        return false;
+                    }
+                }
+                if (!flag) {
+                    this.tabsData.push({
+                        title: title,
+                        name: name,
+                        content: null
+                    });
+                    this.tabsIndex = name;
+                    $.post(path, function (result) {
+                        $("#tab_" + name).html(result);
+                        self.tabsData[self.tabsData.length - 1].content = eval(name);
+                    });
+                }
+            },
+            removeTab(targetName) {
+                let tabs = this.tabsData;
+                let activeName = this.tabsIndex;
+                if (activeName === targetName) {
+                    tabs.forEach((tab, index) => {
+                        if (tab.name === targetName) {
+                            let nextTab = tabs[index + 1] || tabs[index - 1];
+                            if (nextTab) {
+                                activeName = nextTab.name;
+                            }
+                        }
+                    });
+                }
+                this.tabsIndex = activeName;
+                this.tabsData = tabs.filter(tab => tab.name !== targetName);
+            },
+        }
+    });
+</script>
